@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-export async function POST(req) {
-  try {
+export async function POST(req: NextRequest, res: NextResponse) {
+    try {
     const body = await req.json();
     const { user, frameData } = body;
     const userFid = user.fid;
