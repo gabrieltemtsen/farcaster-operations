@@ -8,12 +8,17 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const userFid = user.fid;
     const author = frameData.fid;
 
-    let url = `https://api.pinata.cloud/v3/farcaster/users?fid=${userFid}&following=true`;
+    // let url = `https://api.pinata.cloud/v3/farcaster/users?fid=${userFid}&following=true`;
+    // const options = {
+    //   headers: {
+    //     accept: 'application/json',
+    //     authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+    //   },
+    // };
+    const url = `https://api.neynar.com/v2/farcaster/following?fid=${userFid}&viewer_fid=${author}&sort_type=desc_chron&limit=100`;
     const options = {
-      headers: {
-        accept: 'application/json',
-        authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-      },
+      method: 'GET',
+      headers: {accept: 'application/json', api_key: 'NEYNAR_API_DOCS'}
     };
 
     let isFollowing = false;
