@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const fetchPromises = [];
 
     // Function to fetch a page of data
-    const fetchData = async (cursor) => {
+    const fetchData = async (cursor: any) => {
       const response = await axios.get(url, {
         ...options,
         params: cursor ? { cursor } : {},
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     while (hasMoreData) {
       // Check if userFid is in the list of followers
       console.log(++count)
-      if (data.users.some(follow => follow.user.fid === author)) {
+      if (data.users.some((follow:any) => follow.user.fid === author)) {
         isFollowing = true;
         break;
       }
@@ -51,10 +51,10 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
         // Fetch next batch in parallel
         if (fetchPromises.length >= 5) { // You can adjust the batch size as needed
-          const results = await Promise.all(fetchPromises);
+          const results: any = await Promise.all(fetchPromises);
           fetchPromises.length = 0; // Clear the promises array
           for (const result of results) {
-            if (result.users.some(follow => follow.user.fid === author)) {
+            if (result.users.some(((follow: any )=> follow.user.fid === author))) {
               isFollowing = true;
               hasMoreData = false;
               break;
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
       return NextResponse.json({ success: false });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('error:', error);
     return NextResponse.json({ success: false, error: error.message });
   }
