@@ -1,5 +1,5 @@
 import { NextResponse,NextRequest } from 'next/server';
-import neynarClient from "../utils/neynarClient";
+import neynarClient from "../../utils/neynarClient";
 import { NeynarFrameCreationRequest } from '@neynar/nodejs-sdk/build/neynar-api/v2';
 
 export async function POST(req: NextRequest) {
