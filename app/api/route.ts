@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       const frame = await neynarClient.publishNeynarFrame(creationRequest);
   
       const reply = await neynarClient.publishCast(
-        process.env.SIGNER_UUID,
+        process.env.NEXT_PUBLIC_SIGNER_UUID as string,
         `gm ${hookData.data.author.username}`,
         {
           replyTo: hookData.data.hash,
