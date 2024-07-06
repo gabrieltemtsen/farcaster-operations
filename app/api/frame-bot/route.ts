@@ -1,56 +1,56 @@
-import { NextResponse,NextRequest } from 'next/server';
-import neynarClient from "../../utils/neynarClient";
-import { NeynarFrameCreationRequest } from '@neynar/nodejs-sdk/build/neynar-api/v2';
+import { NextRequest, NextResponse } from "next/server";
+import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-farcaster/models/cast.js";
+import { createHmac } from "crypto";
+import neynarClient from "@/app/utils/neynarClient";
+/**
+ * Post to /framebot/reply?secret=.... with body type: { data: { author: { username: string }, hash: string } }
+ * One way to do this is to use a neynar webhook.
+ */
+export async function POST(req: NextRequest, res: NextResponse) {
+  const body = await req.text();
 
-export async function POST(req: NextRequest) {
-    if (!process.env.SIGNER_UUID) {
-      throw new Error("Make sure you set SIGNER_UUID in your .env file");
-    }
-  
-    try {
-      const body = await req.text();
-      const hookData = JSON.parse(body);
-      const creationRequest: NeynarFrameCreationRequest = {
-        name: `gm ${hookData.data.author.username}`,
-        pages: [
-          {
-            image: {
-              url: "https://moralis.io/wp-content/uploads/web3wiki/638-gm/637aeda23eca28502f6d3eae_61QOyzDqTfxekyfVuvH7dO5qeRpU50X-Hs46PiZFReI.jpeg",
-              aspect_ratio: "1:1",
-            },
-            title: "Page title",
-            buttons: [],
-            input: {
-              text: {
-                enabled: false,
-              },
-            },
-            uuid: "gm",
-            version: "vNext",
-          },
-        ],
-      };
-      
-      const frame = await neynarClient.publishNeynarFrame(creationRequest);
-  
-      const reply = await neynarClient.publishCast(
-        process.env.NEXT_PUBLIC_SIGNER_UUID as string,
-        `gm ${hookData.data.author.username}`,
-        {
-          replyTo: hookData.data.hash,
-          embeds: [
-            {
-              url: frame.link,
-            },
-          ],
-        }
-      );
-  
-      console.log("reply:", reply);
-  
-      return NextResponse.json({ status: 'success', reply });
-    } catch (error: any) {
-      console.error("Error publishing cast:", error);
-      return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
-    }
+  const webhookSecret = process.env.NEXT_PUBLIC_NEYNAR_WEBHOOK_SECRET;
+
+  if (
+    !process.env.NEXT_PUBLIC_SIGNER_UUID ||
+    !process.env.NEXT_PUBLIC_NEYNAR_API_KEY ||
+    !webhookSecret
+  ) {
+    throw new Error(
+      "Make sure you set SIGNER_UUID , NEYNAR_API_KEY and  NEYNAR_WEBHOOK_SECRET in your .env file"
+    );
   }
+
+  const sig = req.headers.get("X-Neynar-Signature");
+  if (!sig) {
+    throw new Error("Neynar signature missing from request headers");
+  }
+
+  const hmac = createHmac("sha512", webhookSecret);
+  hmac.update(body);
+  const generatedSignature = hmac.digest("hex");
+
+  const isValid = generatedSignature === sig;
+  if (!isValid) {
+    throw new Error("Invalid webhook signature");
+  }
+
+  const hookData = JSON.parse(body) as {
+    created_at: number;
+    type: "cast.created";
+    data: CastV2;
+  };
+
+  const reply = await neynarClient.publishCast(
+    process.env.NEXT_PUBLIC_SIGNER_UUID,
+    `gm ${hookData.data.author.username}`,
+    {
+      replyTo: hookData.data.hash,
+    }
+  );
+  console.log("reply:", reply);
+
+  return NextResponse.json({
+    message: reply,
+  });
+}
